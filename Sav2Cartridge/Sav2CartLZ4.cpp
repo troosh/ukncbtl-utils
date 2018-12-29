@@ -154,7 +154,7 @@ int main(int argc, char* argv[])
     for (;;)  // breaking the block when we prepared the output image somehow
     {
         // LZ4
-        ::memset(pCartImage, 0, 65536);
+        ::memset(pCartImage, -1, 65536);
         size_t lz4CodedSize = lz4_encode(pFileImage + 512, savImageSize, pCartImage + 512, 65536 - 512);
         if (lz4CodedSize > 24576 - 512)
         {
