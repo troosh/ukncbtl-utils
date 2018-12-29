@@ -10,7 +10,7 @@ all: sav2cart sav2cart_lz4
 sav2cart: $(OBJECTS)
 	$(CXX) $(CXXFLAGS) -o sav2cart $(OBJECTS)
 
-sav2cart_lz4:
+sav2cart_lz4: Sav2CartLZ4.cpp
 	$(CXX) -std=c++11 -Wall -O0 -g -o sav2cart_lz4 Sav2CartLZ4.cpp
 
 

@@ -8,7 +8,7 @@ See the GNU Lesser General Public License for more details.
     You should have received a copy of the GNU Lesser General Public License along with
 UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 
-// Sav2Cart.cpp
+// Sav2CartLZ4.cpp
 
 #ifdef _MSC_VER
 # define _CRT_SECURE_NO_WARNINGS
@@ -25,16 +25,75 @@ UKNCBTL. If not, see <http://www.gnu.org/licenses/>. */
 //////////////////////////////////////////////////////////////////////
 // LZ4 packer/unpacker
 
+#include "smallz4.h"
+
+// ==================== I/O INTERFACE ====================
+
+unsigned char *indata  = NULL;
+unsigned char *outdata = NULL;
+
+size_t  inpos = 0,  inposmax = 0;
+size_t outpos = 0, outposmax = 0, skip_counter = 0;
+
+/// read a block of bytes
+size_t getBytesFromIn(void* data, size_t numBytes)
+{
+    if (data && numBytes > 0)
+    {
+        if ((inpos + numBytes) > inposmax) numBytes = (inposmax - inpos);
+
+        ::memcpy(data, &indata[inpos], numBytes);
+        inpos += numBytes;
+        return numBytes;
+    }
+    return 0;
+}
+
+/// write a block of bytes
+void sendBytesToOut(const void* data, size_t numBytes)
+{
+    // Skip header
+    if(numBytes > skip_counter) {
+        numBytes -= skip_counter;
+        if (data && numBytes > 0)
+        {
+            if ((outpos + numBytes) > outposmax) numBytes = (outposmax - outpos);
+
+            ::memcpy(&outdata[outpos], (const char *)data + skip_counter, numBytes);
+            outpos += numBytes;
+            skip_counter=0;
+        }
+    } else {
+        skip_counter -= numBytes;
+        return;
+    }
+}
+
+// ======================================================
 
 size_t lz4_encode(unsigned char *inbuffer, size_t insize, unsigned char *outbuffer, size_t outsize)
 {
-    return 0;
+    inpos = 0;
+    indata = inbuffer;
+    inposmax = insize;
+
+    skip_counter = 13; // Skip header
+    outpos = 0;
+    outdata = outbuffer;
+    outposmax = outsize;
+
+    smallz4::lz4(getBytesFromIn, sendBytesToOut, 65536);
+
+    printf("LZ4 input size %lu. bytes\n", insize);
+    printf("LZ4 output size %lu. bytes (%1.2f %%)\n", outpos, outpos * 100.0 / insize);
+    return outpos;
 }
 
 size_t lz4_decode(unsigned char *inbuffer, size_t insize, unsigned char *outbuffer, size_t outsize)
 {
     return 0;
 }
+
 
 //////////////////////////////////////////////////////////////////////
 
@@ -105,7 +164,7 @@ int main(int argc, char* argv[])
 {
     if (argc < 3)
     {
-        printf("Usage: Sav2Cart <inputfile.SAV> <outputfile.BIN>\n");
+        printf("Usage: Sav2CartLZ4 <inputfile.SAV> <outputfile.BIN>\n");
         return 255;
     }
 
@@ -151,9 +210,8 @@ int main(int argc, char* argv[])
         return 255;
     }
 
-    for (;;)  // breaking the block when we prepared the output image somehow
+    for (;;)
     {
-        // LZ4
         ::memset(pCartImage, -1, 65536);
         size_t lz4CodedSize = lz4_encode(pFileImage + 512, savImageSize, pCartImage + 512, 65536 - 512);
         if (lz4CodedSize > 24576 - 512)
@@ -162,6 +220,7 @@ int main(int argc, char* argv[])
         }
         else
         {
+#if 0
             // Trying to decode to make sure encoder works fine
             uint8_t* pTempBuffer = (uint8_t*) ::calloc(65536, 1);
             if (pTempBuffer == NULL)
@@ -180,7 +239,7 @@ int main(int argc, char* argv[])
             }
             ::free(pTempBuffer);
             printf("LZ4 decode check done, decoded size %lu. bytes\n", decodedSize);
-
+#endif
             ::memcpy(pCartImage, pFileImage, 512);
 
             // Prepare the loader
