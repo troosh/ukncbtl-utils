@@ -1,0 +1,86 @@
+;.enabl	ama
+;.ASECT
+
+        .MCall  .Exit, .Print
+TEST:
+        JMP     START
+;         . = 0074
+LAUNCH: JMP     EXIT
+
+;         . = 0122
+         .blkb   0112
+UNLZ4:
+; ------------------------------
+        MOV     #dst, R5
+        MOV     #src, R0
+        MOV     #-4,  R4        ; Нет лучше места под константу -4, чем R4
+
+        CLR     R2
+gettoken:
+        BISB    (R0)+, R2       ; (на входе всегда R2=0), считываем
+        MOV     R2, R1          ; байт-токен без знакового расширения
+
+        ASH     R4, R1          ; Старший полубайт - число литералов
+        BEQ     noliterals      ; Литералов может и не быть...
+        CMP     #^X0f, R1       ; Признак большой длины?
+        BNE     copylits
+          CLR     R3
+1$:         BISB  (R0)+, R3     ; Уточняем длину...
+            ADD   R3, R1
+            INCB  R3            ; бесконечно долго, пока приходят 0xFF
+            BEQ   1$
+
+copylits: MOVB  (R0)+, (R5)+    ; Копируем литералы
+          SOB     R1, copylits
+
+noliterals:
+        MOV     (R0)+, R3       ; Получаем два байт смещения
+        BEQ     LAUNCH          ; Нулевое смещение - конец сжатого блока
+                                ; R1=0, как бы мы сюда не попали
+        BIC     #^X0fff0, R2    ; Младший полубайт - число копируемых байт
+        CMP     #^X0f, R2       ; Признак большой длины?
+        BNE     shortstr
+2$:       BISB  (R0)+, R1       ; Уточняем длину...
+          ADD   R1, R2
+          INCB  R1              ; бесконечно долго, пока приходят 0xFF
+          BEQ   2$
+shortstr:
+        SUB     R4, R2          ; Минимальный размер строки - 4 байта
+        MOV     R5, R1
+        SUB     R3, R1
+copystr:  MOVB  (R1)+, (R5)+    ; Копируем строку из
+          SOB   R2, copystr     ; уже распакованных данных
+        BR      gettoken
+; ------------------------------
+
+START:  .Print  #msg1
+        JMP     UNLZ4
+
+EXIT:
+	.Print  #msg2
+        .Print  #dst
+        .Exit
+
+dst:    .blkb   1000.
+
+; Сжатые данные для проверки
+        .radix  16
+
+src:    .byte   72              ; Далее 7 литералов и копируем строку из 6 символов
+        .ascii  "Hello !"
+        .byte   1, 0            ; Смещение -1
+
+        .byte   1f              ; Два литерала и копируем строку из:
+        .ascii  "?"
+        .byte   2, 0            ; (Смещение -2)
+        .byte   0ff
+        .byte   0a              ;                                    15+10 = 25 байт
+
+        .byte   10              ; Один литерал \0 и ...
+        .byte   0
+        .byte   0, 0            ; Нулевое смещение - признак конца сжатых данных
+
+msg1:    .asciz "Unpacking... "
+msg2:    .asciz "done "
+
+.End    TEST
