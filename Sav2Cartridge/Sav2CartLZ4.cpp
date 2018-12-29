@@ -292,6 +292,7 @@ int main(int argc, char* argv[])
                 return 255;
             }
             size_t decodedSize = lz4_decode(pCartImage + 512, lz4CodedSize, pTempBuffer, 65536);
+            if (decodedSize != savImageSize) printf("failed, LZ4 decoded size = %zu (must be: %zu)\n", decodedSize, savImageSize);
             for (size_t offset = 0; offset < savImageSize; offset++)
             {
                 if (pTempBuffer[offset] == pFileImage[512 + offset])
