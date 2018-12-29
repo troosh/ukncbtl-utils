@@ -89,9 +89,32 @@ size_t lz4_encode(unsigned char *inbuffer, size_t insize, unsigned char *outbuff
     return outpos;
 }
 
-size_t lz4_decode(unsigned char *inbuffer, size_t insize, unsigned char *outbuffer, size_t outsize)
+size_t lz4_decode(unsigned char *src, size_t insize, unsigned char *dst, size_t outsize)
 {
-    return 0;
+    uint8_t token, byte;
+    size_t len, offset;
+    uint8_t *start = dst;
+
+    while(1) {
+        token = *src++;
+
+        len = (token>>4) & 0xf;
+        if (len == 0xf) {
+            do { byte = *src++; len += byte; } while(byte == 0xFF);
+        }
+        while(len--) *dst++ = *src++;
+
+        offset = *src++;
+        offset |= (*src++) << 8;
+        if(offset == 0)  return (dst - start);
+
+        len = token & 0xf;
+        if (len == 0xf) {
+            do { byte = *src++; len += byte; } while(byte == 0xFF);
+        }
+        len += 4;
+        while(len--) { dst[0] = dst[-offset]; dst++; };
+    }
 }
 
 
@@ -261,7 +284,6 @@ int main(int argc, char* argv[])
         }
         else
         {
-#if 0
             // Trying to decode to make sure encoder works fine
             uint8_t* pTempBuffer = (uint8_t*) ::calloc(65536, 1);
             if (pTempBuffer == NULL)
@@ -275,12 +297,16 @@ int main(int argc, char* argv[])
                 if (pTempBuffer[offset] == pFileImage[512 + offset])
                     continue;
 
-                printf("LZ4 decode failed at offset %06ho 0x%04x (%02x != %02x)\n", (uint16_t)(512 + offset), (uint16_t)(512 + offset), pTempBuffer[offset], pFileImage[512 + offset]);
+                printf("LZ4 decode failed at offset %06ho 0x%04x (%02x != %02x)\n", (uint16_t)(512 + offset),
+                       (uint16_t)(512 + offset), pTempBuffer[offset], pFileImage[512 + offset]);
+#if 0
                 return 255;
+#else
+ break;
+#endif
             }
             ::free(pTempBuffer);
             printf("LZ4 decode check done, decoded size %lu. bytes\n", decodedSize);
-#endif
             ::memcpy(pCartImage, pFileImage, 512);
 
             // Prepare the loader
