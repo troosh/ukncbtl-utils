@@ -1,5 +1,6 @@
 ;.enabl	ama
 ;.ASECT
+        .list meb
 
         .MCall  .Exit, .Print
 TEST:
@@ -30,8 +31,20 @@ gettoken:
             INCB  R3            ; бесконечно долго, пока приходят 0xFF
             BEQ   1$
 
-copylits: MOVB  (R0)+, (R5)+    ; Копируем литералы
-          SOB     R1, copylits
+copylits:
+          DEC     R1
+          MOV     R1, R3
+          ASH     R4, R1
+          INC     R1
+          COM     R3
+          BIC     #^X0fff0, R3
+          ADD     R3, R3
+          ADD     R3, PC
+3$:
+          .rept  16.
+          MOVB  (R0)+, (R5)+    ; Копируем литералы
+          .endr
+          SOB     R1, 3$
 
 noliterals:
         MOV     (R0)+, R3       ; Получаем два байт смещения

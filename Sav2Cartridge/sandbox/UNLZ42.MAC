@@ -1,5 +1,6 @@
 ;.enabl	ama
 ;.ASECT
+        .list meb
 
         .MCall  .Exit, .Print
 TEST:
@@ -48,8 +49,20 @@ shortstr:
         SUB     R4, R2          ; ћинимальный размер строки - 4 байта
         MOV     R5, R1
         SUB     R3, R1
-copystr:  MOVB  (R1)+, (R5)+    ;  опируем строку из
-          SOB   R2, copystr     ; уже распакованных данных
+copystr:
+          DEC     R2
+          MOV     R2, R3
+          ASH     R4, R2
+          INC     R2
+          COM     R3
+          BIC     #^X0fff0, R3
+          ADD     R3, R3
+          ADD     R3, PC
+4$:
+          .rept  16.
+          MOVB  (R1)+, (R5)+    ;  опируем строку из
+          .endr
+          SOB   R2, 4$          ; уже распакованных данных
         BR      gettoken
 ; ------------------------------
 

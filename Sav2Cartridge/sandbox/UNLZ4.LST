@@ -1,4 +1,4 @@
-.MAIN.	MACRO V05.06R Saturday 29-Dec-18 08:32  Page 1
+.MAIN.	MACRO V05.06R Wednesday 16-Oct-19 11:07  Page 1
 
 
       1					;.enabl	ama
@@ -58,7 +58,7 @@
      55
      56	000236				START:  .Print  #msg1
      57	000244	000167 	177652 		        JMP     UNLZ4
-.MAIN.	MACRO V05.06R Saturday 29-Dec-18 08:32  Page 1-1
+.MAIN.	MACRO V05.06R Wednesday 16-Oct-19 11:07  Page 1-1
 
 
      58
@@ -84,29 +84,37 @@
      76	002254	   377 			        .byte   0ff
      77	002255	   012 			        .byte   0a              ;                                    15+10 = 25 байт
      78
-     79	002256	   020 			        .byte   10              ; Один литерал \0 и ...
-     80	002257	   000 			        .byte   0
-     81	002260	   000 	   000 		        .byte   0, 0            ; Нулевое смещение - признак конца сжатых данных
-     82
-     83	002262	   125 	   156 	   160 	msg1:    .asciz "Unpacking... "
-	002265	   141 	   143 	   153
-	002270	   151 	   156 	   147
-	002273	   056 	   056 	   056
-	002276	   040 	   000
-     84	002300	   144 	   157 	   156 	msg2:    .asciz "done "
-	002303	   145 	   040 	   000
-     85
-     86		000000'			.End    TEST
-.MAIN.	MACRO V05.06R Saturday 29-Dec-18 08:32  Page 1-2
+     79	002256	   360 			        .byte   0F0             ; Далее 21 литерал и ничего уже не копируем (нулевое смещение)
+     80	002257	   006 			        .byte   6               ; (20-14)
+     81	002260	   115 	   145 	   144 	        .ascii  "Medved privet v obed"
+	002263	   166 	   145 	   144
+	002266	   040 	   160 	   162
+	002271	   151 	   166 	   145
+	002274	   164 	   040 	   166
+	002277	   040 	   157 	   142
+	002302	   145 	   144
+     82	002304	   000 			        .byte   0               ; Нулевой байт - конец строки
+     83	002305	   000 	   000 		        .byte   0, 0            ; Нулевое смещение - признак конца сжатых данных
+     84
+     85	002307	   125 	   156 	   160 	msg1:    .asciz "Unpacking... "
+	002312	   141 	   143 	   153
+	002315	   151 	   156 	   147
+	002320	   056 	   056 	   056
+	002323	   040 	   000
+     86	002325	   144 	   157 	   156 	msg2:    .asciz "done "
+	002330	   145 	   040 	   000
+     87
+     88		000000'			.End    TEST
+.MAIN.	MACRO V05.06R Wednesday 16-Oct-19 11:07  Page 1-2
 Symbol table
 
-COPYLI  000170R  	EXIT    000250R  	MSG1    002262R  	SHORTS  000222R  	TEST    000000R
-COPYST  000230R  	GETTOK  000140R  	MSG2    002300R  	SRC     002236R  	UNLZ4   000122R
+COPYLI  000170R  	EXIT    000250R  	MSG1    002307R  	SHORTS  000222R  	TEST    000000R
+COPYST  000230R  	GETTOK  000140R  	MSG2    002325R  	SRC     002236R  	UNLZ4   000122R
 DST     000266R  	LAUNCH  000004R  	NOLITE  000174R  	START   000236R  	...V1 = 000003
 
 
 . ABS.	000000    000	(RW,I,GBL,ABS,OVR)
-      	002306    001	(RW,I,LCL,REL,CON)
+      	002333    001	(RW,I,LCL,REL,CON)
 Errors detected:  0
 
 *** Assembler statistics
@@ -114,7 +122,7 @@ Errors detected:  0
 
 Work  file  reads: 0
 Work  file writes: 0
-Size of work file: 10575 Words  ( 42 Pages)
+Size of work file: 10605 Words  ( 42 Pages)
 Size of core pool: 16640 Words  ( 65 Pages)
 Operating  system: RT-11
 
